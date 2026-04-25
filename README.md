@@ -70,15 +70,25 @@ Built to explore real-time audio visualization, rhythm structure design, and low
 ## **📂 Project Structure**
 
 calico-rhythm
+
 ├── index.html            # Entry point & UI structure
+
 ├── style.css             # UI styling and layout system
+
 ├── favicon.png           # Application icon asset
+
 └── scripts/
+
     ├── script.js         # Application state, initialization, UI wiring
+    
     ├── audio-engine.js   # Web Audio API (playback, file loading, onset detection)
+    
     ├── renderer.js       # Canvas + DOM rendering system
+    
     ├── controls.js       # User input, playback control, zoom, gestures
+    
     ├── utils.js          # Pure helper functions (time, snapping, lane mapping)
+    
     └── constants.js      # Global configuration values
     
 ---
