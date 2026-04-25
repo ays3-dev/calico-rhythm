@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Calico</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Fredoka:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+
+  <body>
+    <header>
+      <span class="ear"></span>
+      <span class="ear right"></span>
+
+      <div class="title-wrap">
+        <div class="cat-face"><div class="nose"></div></div>
+        <h1>Calico · Rhythm Editor</h1>
+      </div>
+
+      <div class="toolbar">
+        <div class="note-type-group" role="group" aria-label="Note type">
+          <button type="button" class="note-type-btn active" data-type="tap">Tap</button>
+          <button type="button" class="note-type-btn" data-type="hold">Hold</button>
+          <button type="button" class="note-type-btn" data-type="flick">Flick</button>
+        </div>
+
+        <button id="playBtn" class="primary">▶ Play</button>
+        <button id="stopBtn">■ Stop</button>
+        <button id="orientationBtn" title="Toggle vertical / horizontal">↕ Vertical</button>
+        <button id="toolsToggle" class="tools-toggle" type="button" aria-label="Hide controls">▾ Hide</button>
+
+        <div class="zoom-group" role="group" aria-label="Zoom">
+          <button id="zoomOutBtn" type="button" aria-label="Zoom out">−</button>
+          <span id="zoomLabel" class="zoom-label">100%</span>
+          <button id="zoomInBtn"  type="button" aria-label="Zoom in">+</button>
+        </div>
+        <button id="clearBtn" class="danger">Clear</button>
+        <button id="exportBtn">Export JSON</button>
+
+        <label class="field">
+          Duration (s)
+          <input type="number" id="durationInput" min="5" max="600" value="30" />
+        </label>
+
+        <label class="field">
+          BPM
+          <input type="number" id="bpmInput" min="30" max="300" value="120" />
+        </label>
+
+        <label class="field">
+          Snap
+          <select id="snapSelect">
+            <option value="0">Off</option>
+            <option value="16">1/16 beat</option>
+            <option value="8">1/8 beat</option>
+            <option value="4">1/4 beat</option>
+            <option value="2">1/2 beat</option>
+            <option value="1" selected>1 beat</option>
+          </select>
+        </label>
+
+        <label class="field">
+          Audio
+          <input type="file" id="audioInput" accept="audio/*" />
+        </label>
+      </div>
+
+      <div class="info">
+        <span class="paw">🐾</span>
+        <span id="noteCount">0 notes</span> ·
+        <span id="timeDisplay">0.00s</span>
+      </div>
+    </header>
+
+    <div class="editor">
+      <div class="timeline-wrap" id="timelineWrap">
+        <div class="lane-header">
+          <div class="lane-label">1</div>
+          <div class="lane-label">2</div>
+          <div class="lane-label">3</div>
+          <div class="lane-label">4</div>
+          <div class="lane-label">5</div>
+        </div>
+
+        <div class="grid" id="grid">
+          <canvas class="waveform" id="waveform"></canvas>
+          <div class="playhead" id="playhead" style="bottom: 0px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <button id="toolsShow" class="tools-show" type="button" aria-label="Show controls">▴ Tools</button>
+
+    <div class="hint" id="hint">
+      Tap to place · Drag for hold · Drag a note to move · Tap to delete
+      <button
+        class="hint-close"
+        id="hintClose"
+        type="button"
+        aria-label="Dismiss hint"
+      >×</button>
+    </div>
+
+    <audio id="audio"></audio>
+
+    <script type="module" src="/scripts/script.js"></script>
+    
+  </body>
+</html>
