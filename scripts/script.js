@@ -1,8 +1,8 @@
-import { LANES, BASE_PX_PER_SECOND } from "scripts/constants.js";
-import { isHorizontal, snapTime, timeFromEvent, laneFromEvent } from "scripts/utils.js";
-import { sfxTick, sfxClick, sfxPop, loadAudioFile } from "scripts/audio-engine.js";
-import { renderGrid, renderWaveform } from "scripts/renderer.js";
-import { setZoom, updateZoomLabel, startPlayback, pausePlayback, stopPlayback, resetScrollPosition, setupZoomGestures } from "scripts/controls.js";
+import { LANES, BASE_PX_PER_SECOND } from "./constants.js";
+import { isHorizontal, snapTime, timeFromEvent, laneFromEvent } from "./utils.js";
+import { sfxTick, sfxClick, sfxPop, loadAudioFile } from "./audio-engine.js";
+import { renderGrid, renderWaveform } from "./renderer.js";
+import { setZoom, updateZoomLabel, startPlayback, pausePlayback, stopPlayback, resetScrollPosition, setupZoomGestures } from "./controls.js";
 
 const state = {
   LANES,
@@ -222,7 +222,8 @@ snapSelect.addEventListener("change", () => {
 audioInput.addEventListener("change", (e) => {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
-  loadAudioFile(file, { ...state, durationInput });
+  state.durationInput = durationInput;
+  loadAudioFile(file, state);
 });
 
 if (hintClose) hintClose.addEventListener("click", () => hint.classList.add("hidden"));
