@@ -1,13 +1,11 @@
-import { getAudioBuffer, getAudioOnsets, sfxTick, sfxPop } from "scripts/audio-engine.js";
-import { isHorizontal, snapTime, timeFromEvent, laneFromEvent } from "scripts/utils.js";
-
+import { getAudioBuffer, getAudioOnsets, getAudioHolds, sfxTick, sfxPop } from "./audio-engine.js";
+import { isHorizontal, snapTime, timeFromEvent, laneFromEvent } from "./utils.js";
 export function recomputeNoteSizes(state) {
   const div = state.snapDivision > 0 ? state.snapDivision : 1;
   const stepPx = (60 / state.bpm / div) * state.PX_PER_SECOND;
   state.noteThickness = Math.max(6, Math.min(16, Math.floor(stepPx * 0.7)));
   state.flickThickness = Math.max(14, Math.min(30, Math.floor(stepPx * 0.9)));
 }
-
 export function applyGridSize(state) {
   const totalLen = state.duration * state.PX_PER_SECOND;
   if (isHorizontal()) {
@@ -18,11 +16,9 @@ export function applyGridSize(state) {
     state.grid.style.width = "";
   }
 }
-
 export function positionNote(el, type, lane, time, noteDuration, state) {
   const horizontal = isHorizontal();
   const laneSizePct = 100 / state.LANES;
-
   if (horizontal) {
     if (type === "flick") {
       el.style.top = "calc(" + (lane * laneSizePct + laneSizePct / 2) + "% - " + state.flickThickness / 2 + "px)";
@@ -56,7 +52,6 @@ export function positionNote(el, type, lane, time, noteDuration, state) {
     }
   }
 }
-
 export function renderNote(note, state) {
   const el = document.createElement("div");
   el.className = "note " + note.type + " lane-" + note.lane;
@@ -64,9 +59,7 @@ export function renderNote(note, state) {
     (note.type === "tap" ? "Tap" : note.type === "hold" ? "Hold" : note.type === "flick" ? "Flick" : "") +
     " · Lane " + (note.lane + 1) + " @ " + note.time.toFixed(3) + "s" +
     (note.type === "hold" ? " for " + note.duration.toFixed(3) + "s" : "");
-
   positionNote(el, note.type, note.lane, note.time, note.duration, state);
-
   if (note.type === "hold") {
     const head = document.createElement("div");
     head.className = "head";
@@ -83,31 +76,25 @@ export function renderNote(note, state) {
       '<circle class="sparkle" cx="8"  cy="6"   r="0.8" opacity="0.6" />' +
       "</svg>";
   }
-
   attachNoteDragHandlers(el, note, state);
   state.grid.appendChild(el);
 }
-
 function attachNoteDragHandlers(el, note, state) {
   let drag = null;
-
   el.addEventListener("pointerdown", (e) => {
     e.stopPropagation();
     if (e.pointerType === "mouse" && e.button !== 0) return;
     if (state.dragState) return;
     e.preventDefault();
-
     const ghost = document.createElement("div");
     ghost.className = el.className + " ghost";
     ghost.innerHTML = el.innerHTML;
     positionNote(ghost, note.type, note.lane, note.time, note.duration, state);
     state.grid.appendChild(ghost);
     el.classList.add("dragging");
-
     drag = { ghostEl: ghost, startX: e.clientX, startY: e.clientY, lane: note.lane, time: note.time, moved: false, id: e.pointerId };
     try { el.setPointerCapture(e.pointerId); } catch (_) {}
   });
-
   el.addEventListener("pointermove", (e) => {
     if (!drag || drag.id !== e.pointerId) return;
     const dx = e.clientX - drag.startX;
@@ -118,15 +105,12 @@ function attachNoteDragHandlers(el, note, state) {
     drag.time = snapTime(timeFromEvent(e, state), state);
     positionNote(drag.ghostEl, note.type, drag.lane, drag.time, note.duration, state);
   });
-
   function endDrag(e, cancel) {
     if (!drag || drag.id !== e.pointerId) return;
     drag.ghostEl.remove();
     el.classList.remove("dragging");
     try { el.releasePointerCapture(e.pointerId); } catch (_) {}
-
     if (cancel) { drag = null; return; }
-
     if (!drag.moved) {
       state.notes = state.notes.filter((n) => n !== note);
       sfxPop();
@@ -151,39 +135,31 @@ function attachNoteDragHandlers(el, note, state) {
     }
     drag = null;
   }
-
   el.addEventListener("pointerup", (e) => endDrag(e, false));
   el.addEventListener("pointercancel", (e) => endDrag(e, true));
 }
-
 export function renderWaveform(state) {
   const audioBuffer = getAudioBuffer();
   const horizontal = isHorizontal();
   const totalLen = state.duration * state.PX_PER_SECOND;
   const dpr = window.devicePixelRatio || 1;
-
   const w = horizontal ? totalLen : state.grid.clientWidth || 1;
   const h = horizontal ? state.grid.clientHeight || 1 : totalLen;
-
   state.waveformCanvas.width = Math.max(1, Math.floor(w * dpr));
   state.waveformCanvas.height = Math.max(1, Math.floor(h * dpr));
   state.waveformCanvas.style.width = w + "px";
   state.waveformCanvas.style.height = h + "px";
-
   const ctx2d = state.waveformCanvas.getContext("2d");
   ctx2d.setTransform(1, 0, 0, 1, 0, 0);
   ctx2d.scale(dpr, dpr);
   ctx2d.clearRect(0, 0, w, h);
-
   if (!audioBuffer) return;
-
   const numCh = audioBuffer.numberOfChannels;
   const ch0 = audioBuffer.getChannelData(0);
   const ch1 = numCh > 1 ? audioBuffer.getChannelData(1) : null;
   const sampleRate = audioBuffer.sampleRate;
   const songDur = audioBuffer.duration;
   const samplesPerPixel = sampleRate / state.PX_PER_SECOND;
-
   function ampAtPixel(p) {
     const time = horizontal ? p / state.PX_PER_SECOND : (h - p) / state.PX_PER_SECOND;
     const sStart = Math.max(0, Math.floor(time * sampleRate));
@@ -202,7 +178,6 @@ export function renderWaveform(state) {
     }
     return max;
   }
-
   if (horizontal) {
     const pixels = Math.floor(Math.min(w, songDur * state.PX_PER_SECOND));
     const centerY = h / 2;
@@ -231,34 +206,60 @@ export function renderWaveform(state) {
     ctx2d.fill();
   }
 }
-
 export function renderOnsets(state) {
   const audioOnsets = getAudioOnsets();
   if (!audioOnsets || audioOnsets.length === 0) return;
   const horizontal = isHorizontal();
-  for (const t of audioOnsets) {
+  for (const onset of audioOnsets) {
+    const t = onset.time;
     if (t > state.duration) continue;
     const line = document.createElement("div");
-    line.className = "onset-line";
-    if (horizontal) line.style.left = t * state.PX_PER_SECOND + "px";
-    else line.style.bottom = t * state.PX_PER_SECOND + "px";
+    let cls = "onset-line " + (onset.kind === "flick" ? "onset-flick" : "onset-tap");
+    if (onset.strength > 0.7) cls += " strong";
+    else if (onset.strength > 0.4) cls += " medium";
+    else cls += " weak";
+    line.className = cls;
+    if (horizontal) line.style.left   = t * state.PX_PER_SECOND + "px";
+    else            line.style.bottom = t * state.PX_PER_SECOND + "px";
     state.grid.appendChild(line);
   }
 }
-
+export function renderHolds(state) {
+  const audioHolds = getAudioHolds();
+  if (!audioHolds || audioHolds.length === 0) return;
+  const horizontal = isHorizontal();
+  for (const hold of audioHolds) {
+    if (hold.time > state.duration) continue;
+    const dur = Math.min(hold.duration, state.duration - hold.time);
+    if (dur <= 0) continue;
+    const bar = document.createElement("div");
+    bar.className = "onset-hold-region";
+    if (horizontal) {
+      bar.style.left   = hold.time * state.PX_PER_SECOND + "px";
+      bar.style.width  = dur * state.PX_PER_SECOND + "px";
+      bar.style.top    = "0";
+      bar.style.bottom = "0";
+    } else {
+      bar.style.bottom = hold.time * state.PX_PER_SECOND + "px";
+      bar.style.height = dur * state.PX_PER_SECOND + "px";
+      bar.style.left   = "0";
+      bar.style.right  = "0";
+    }
+    state.grid.appendChild(bar);
+  }
+}
 export function renderGrid(state) {
   recomputeNoteSizes(state);
   applyGridSize(state);
   state.grid
-    .querySelectorAll(".beat-line, .beat-label, .note, .onset-line")
+    .querySelectorAll(".beat-line, .beat-label, .note, .onset-line, .onset-hold-region")
     .forEach((el) => el.remove());
   renderWaveform(state);
+  renderHolds(state);
   renderOnsets(state);
-
   const horizontal = isHorizontal();
   const secondsPerBeat = 60 / state.bpm;
   const totalBeats = Math.floor(state.duration / secondsPerBeat);
-
   for (let b = 0; b <= totalBeats; b++) {
     const t = b * secondsPerBeat;
     const line = document.createElement("div");
@@ -266,7 +267,6 @@ export function renderGrid(state) {
     if (horizontal) line.style.left = t * state.PX_PER_SECOND + "px";
     else line.style.bottom = t * state.PX_PER_SECOND + "px";
     state.grid.appendChild(line);
-
     if (b % 4 === 0) {
       const label = document.createElement("div");
       label.className = "beat-label";
@@ -276,12 +276,10 @@ export function renderGrid(state) {
       state.grid.appendChild(label);
     }
   }
-
   state.notes.forEach((note) => renderNote(note, state));
   updatePlayhead(state);
   updateInfo(state);
 }
-
 export function updatePlayhead(state) {
   if (isHorizontal()) {
     state.playhead.style.bottom = "";
@@ -291,7 +289,6 @@ export function updatePlayhead(state) {
     state.playhead.style.bottom = state.playOffsetSeconds * state.PX_PER_SECOND + "px";
   }
 }
-
 export function updateInfo(state) {
   state.noteCount.textContent = state.notes.length + " note" + (state.notes.length === 1 ? "" : "s");
   state.timeDisplay.textContent = state.playOffsetSeconds.toFixed(2) + "s";
